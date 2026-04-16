@@ -9,12 +9,12 @@ const Archive = ({ rates }) => {
 
   const fetchArchive = async () => {
     try {
-      const res = await axios.get('/api/projects', { withCredentials: true });
+      const res = await axios.get('/api/projects');
       const archived = res.data.projects.filter(p => p.status === 'Архів');
       setProjects(archived);
       setLoading(false);
     } catch (err) {
-      console.error("Archive sync error", err);
+      console.error("Archive sync error", err.message);
       setLoading(false);
     }
   };
@@ -25,27 +25,24 @@ const Archive = ({ rates }) => {
 
   const handleRestore = async (id) => {
     try {
-      await axios.patch(`/api/projects/${id}`, 
-        { status: 'В роботі' }, 
-        { withCredentials: true }
-      );
+      await axios.patch(`/api/projects/${id}`, { status: 'В роботі' });
       fetchArchive(); 
-      console.log("Проект успішно відновлено!");
     } catch (err) {
-      console.error("Restore failed", err.response?.data || err.message);
+      console.error("Restore failed", err.message);
     }
   };
 
   const calculateTotal = () => {
     return projects.reduce((acc, p) => {
-      const parts = p.price.trim().split(' ');
+      const priceStr = p.price?.toString() || '0 USD';
+      const parts = priceStr.trim().split(' ');
       const value = parseFloat(parts[0]) || 0;
       const curr = parts[1] ? parts[1].toUpperCase() : 'USD';
       const rate = rates?.[curr] || (curr === 'UAH' ? 41.5 : 1);
 
       if (curr === 'UAH') return acc + (value / rate);
-      if (curr === 'BTC') return acc + (value * (rates?.BTC || 65000));
-      if (curr === 'ETH') return acc + (value * (rates?.ETH || 3500));
+      if (curr === 'BTC') return acc + (value * (rates?.BTC || 102000));
+      if (curr === 'ETH') return acc + (value * (rates?.ETH || 3800));
       return acc + value;
     }, 0);
   };
@@ -62,16 +59,14 @@ const Archive = ({ rates }) => {
   );
 
   return (
-    <div className="min-h-screen bg-[#050505] text-slate-400 font-['Inter'] p-6 md:p-12 relative overflow-hidden">
+    <div className="min-h-[80vh] bg-[#050505] text-slate-400 font-['Inter'] relative overflow-hidden">
       
-      {/* BACKGROUND DECOR */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-600/5 rounded-full blur-[120px]"></div>
       </div>
 
       <main className="max-w-5xl mx-auto relative z-10">
         
-        {/* HEADER SECTION */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8 text-left">
           <div>
             <div className="flex items-center space-x-3 mb-4">
@@ -97,21 +92,19 @@ const Archive = ({ rates }) => {
           </div>
         </div>
 
-        {/* SEARCH BAR */}
         <div className="relative mb-12 group">
           <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
             <Search className="text-slate-600 group-focus-within:text-cyan-500 transition-colors" size={18} />
           </div>
           <input 
             type="text" 
-            placeholder="Search within archive nodes (Title or Client)..."
+            placeholder="Search within archive nodes..."
             className="w-full bg-[#0a0a0a] border border-white/5 p-6 pl-16 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] outline-none focus:border-cyan-500/30 focus:bg-white/[0.02] transition-all text-white placeholder:text-slate-800"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        {/* PROJECTS LIST */}
         <div className="space-y-4">
           {filteredProjects.length === 0 ? (
             <div className="text-center py-40 bg-[#0a0a0a] rounded-[3rem] border border-dashed border-white/5">
@@ -120,7 +113,6 @@ const Archive = ({ rates }) => {
           ) : (
             filteredProjects.map(project => (
               <div key={project.id} className="bg-[#0a0a0a] p-8 rounded-[2rem] flex justify-between items-center border border-white/5 hover:border-cyan-500/20 transition-all group relative overflow-hidden">
-                {/* Side line */}
                 <div className="absolute left-0 top-0 h-full w-1 bg-white/5 group-hover:bg-cyan-500 transition-all"></div>
                 
                 <div className="flex items-center space-x-8 text-left">

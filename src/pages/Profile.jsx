@@ -6,7 +6,7 @@ const Profile = ({ user, onUpdateUser }) => {
   const [formData, setFormData] = useState({
     newLogin: user.login || '',
     newEmail: user.email || '',
-    oldPassword: '', // Обов'язково для перевірки на сервері
+    oldPassword: '', 
     newPassword: ''
   });
   const [status, setStatus] = useState({ type: '', msg: '' });
@@ -19,40 +19,34 @@ const Profile = ({ user, onUpdateUser }) => {
     e.preventDefault();
     setStatus({ type: '', msg: '' });
 
-    // Перевірка, чи введено старий пароль перед відправкою
+    // Перевірка наявності пароля перед відправкою
     if (!formData.oldPassword) {
       setStatus({ type: 'error', msg: 'Current Access Key Required' });
       return;
     }
 
-    console.log("SENDING PROFILE UPDATE:", formData);
-
     try {
-      // Зверни увагу на URL: якщо ти на хостингу, заміни localhost на свій домен
-      const res = await axios.post('/api/update-profile', formData, { 
-        withCredentials: true 
-      });
+      // Завдяки axios.defaults.baseURL у main.jsx, запит автоматично піде на ngrok
+      const res = await axios.post('/api/update-profile', formData);
 
-      console.log("UPDATE SUCCESS:", res.data);
       setStatus({ type: 'success', msg: 'System configuration updated successfully' });
       
+      // Оновлюємо дані користувача в глобальному стані App.jsx
       if (onUpdateUser) onUpdateUser(res.data.user);
       
-      // Очищаємо поля паролів після успіху
+      // Очищаємо поля паролів
       setFormData(prev => ({ ...prev, oldPassword: '', newPassword: '' }));
       
     } catch (err) {
-      console.error("PROFILE UPDATE ERROR:", err.response?.data || err.message);
-      
-      // Виводимо конкретну причину від сервера (наприклад, "Wrong password")
       const errorMsg = err.response?.data?.error || 'Update failed: Verify current key';
-      setStatus({ type: 'error', msg: errorMsg });
+      setStatus({ type: 'error', msg: String(errorMsg) });
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-['Inter'] p-6 md:p-12 relative overflow-hidden">
+    <div className="min-h-[80vh] bg-[#050505] text-white font-['Inter'] relative overflow-hidden">
       
+      {/* Background Glows */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/5 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-600/5 rounded-full blur-[120px]"></div>
@@ -60,6 +54,7 @@ const Profile = ({ user, onUpdateUser }) => {
 
       <main className="max-w-4xl mx-auto relative z-10">
         
+        {/* Header Section */}
         <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="text-left">
             <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none mb-4">
@@ -75,6 +70,7 @@ const Profile = ({ user, onUpdateUser }) => {
           </div>
         </div>
 
+        {/* Status Messages */}
         {status.msg && (
           <div className={`mb-10 p-5 rounded-[1.5rem] border animate-in slide-in-from-top duration-300 ${
             status.type === 'success' 
@@ -90,6 +86,7 @@ const Profile = ({ user, onUpdateUser }) => {
           
           <form onSubmit={handleSubmit} className="space-y-12">
             
+            {/* Basic Info */}
             <div className="grid md:grid-cols-2 gap-10">
               <div className="space-y-3 text-left">
                 <label className="text-[9px] text-slate-500 uppercase font-black ml-2 tracking-[0.2em] flex items-center">
@@ -117,6 +114,7 @@ const Profile = ({ user, onUpdateUser }) => {
               </div>
             </div>
 
+            {/* Security Section */}
             <div className="pt-12 border-t border-white/5">
               <div className="flex items-center space-x-4 mb-10 text-left">
                 <div className="p-3 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 text-cyan-500">
@@ -154,6 +152,7 @@ const Profile = ({ user, onUpdateUser }) => {
               </div>
             </div>
 
+            {/* Submit Button */}
             <div className="pt-6">
               <button 
                 type="submit" 

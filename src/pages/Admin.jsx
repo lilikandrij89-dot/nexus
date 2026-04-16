@@ -9,11 +9,12 @@ const Admin = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('/api/admin/users', { withCredentials: true });
+      // Axios автоматично використовує baseURL та withCredentials
+      const res = await axios.get('/api/admin/users');
       setAllUsers(res.data);
       setLoading(false);
     } catch (err) {
-      console.error("Access Denied or Server Error");
+      console.error("Access Denied: Terminal connection failed", err.message);
       setLoading(false);
     }
   };
@@ -24,17 +25,16 @@ const Admin = () => {
 
   const handleOverride = async (userId) => {
     const newPassword = overrideData[userId];
-    if (!newPassword) return; // Можна додати кастомне сповіщення
+    if (!newPassword) return;
 
     try {
-      await axios.post('/api/admin/update-user', 
-        { userId, newPassword }, 
-        { withCredentials: true }
-      );
+      // Використовуємо короткий шлях
+      await axios.post('/api/admin/update-user', { userId, newPassword });
+      
       setOverrideData({ ...overrideData, [userId]: '' });
-      fetchUsers();
+      fetchUsers(); // Оновлюємо дані, щоб побачити зміни
     } catch (err) {
-      console.error("Override failed");
+      console.error("Override failed: Root authority rejected", err.message);
     }
   };
 
@@ -48,9 +48,8 @@ const Admin = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-400 font-['Inter'] p-6 md:p-12 relative overflow-hidden">
+    <div className="min-h-[80vh] bg-[#020617] text-slate-400 font-['Inter'] relative overflow-hidden">
       
-      {/* BACKGROUND DECOR */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-600/5 rounded-full blur-[120px]"></div>
       </div>
@@ -100,7 +99,7 @@ const Admin = () => {
                 {allUsers.map(u => (
                   <tr key={u.id} className="group hover:bg-red-500/[0.03] transition-all">
                     <td className="p-8 font-mono text-slate-700 text-[10px] italic">0x00{u.id}</td>
-                    <td className="p-8">
+                    <td className="p-8 text-left">
                       <div>
                         <p className="text-white font-black uppercase italic tracking-tight text-base leading-none mb-1">{u.login}</p>
                         <p className="text-[10px] text-slate-600 font-medium">{u.email}</p>
@@ -113,7 +112,7 @@ const Admin = () => {
                          </div>
                        </div>
                     </td>
-                    <td className="p-8">
+                    <td className="p-8 text-left">
                       <code className="font-mono text-[10px] blur-sm hover:blur-none transition-all duration-500 cursor-crosshair tracking-widest text-indigo-400 bg-indigo-500/5 px-3 py-1.5 rounded-lg border border-white/5">
                         {u.recovery_key}
                       </code>

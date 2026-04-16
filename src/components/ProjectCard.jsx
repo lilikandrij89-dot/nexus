@@ -10,7 +10,11 @@ const ProjectCard = ({ project, onUpdateStatus, onDelete, onArchive, user }) => 
     const calculateTime = () => {
       if (!project.deadline) return;
       const diff = new Date(project.deadline) - new Date();
-      if (diff <= 0) { setTimeLeft('TERMINATED'); setIsCritical(true); return; }
+      if (diff <= 0) { 
+        setTimeLeft('TERMINATED'); 
+        setIsCritical(true); 
+        return; 
+      }
       
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
@@ -19,12 +23,13 @@ const ProjectCard = ({ project, onUpdateStatus, onDelete, onArchive, user }) => 
       setIsCritical(urgent);
       setTimeLeft(`${d}D ${h}H`);
     };
+
     calculateTime();
     const interval = setInterval(calculateTime, 60000);
     return () => clearInterval(interval);
   }, [project.deadline, project.status]);
 
-  // --- ФУНКЦІЯ ГЕНЕРАЦІЇ PDF ЧЕКА ---
+  // --- ГЕНЕРАЦІЯ PDF ЧЕКА ---
   const generatePDFReceipt = () => {
     const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a6" });
     const cyan = "#06b6d4";
@@ -85,7 +90,7 @@ const ProjectCard = ({ project, onUpdateStatus, onDelete, onArchive, user }) => 
     doc.text("TOTAL PAID:", 15, 112);
     doc.setTextColor(cyan);
     doc.setFontSize(14);
-    doc.text(project.price, 45, 113);
+    doc.text(project.price.toString(), 45, 113);
 
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(6);
@@ -114,7 +119,6 @@ const ProjectCard = ({ project, onUpdateStatus, onDelete, onArchive, user }) => 
         : 'border-white/5 hover:border-cyan-500/20 hover:bg-white/[0.03]'}
     `}>
       
-      {/* Критичний індикатор */}
       {isCritical && (
         <div className="absolute top-0 right-10">
           <div className="bg-red-500 text-white text-[8px] font-black px-3 py-1 rounded-b-xl flex items-center space-x-1 animate-bounce">
@@ -131,7 +135,7 @@ const ProjectCard = ({ project, onUpdateStatus, onDelete, onArchive, user }) => 
           project.status === 'Готово' ? 'bg-cyan-500' : 'bg-slate-800'
         }`}></div>
 
-        <div className="space-y-1">
+        <div className="space-y-1 text-left">
           <div className="flex items-center space-x-3 mb-1">
             <span className="text-[7px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-500 font-black uppercase tracking-widest">
               {project.source || 'SYS'}
@@ -174,11 +178,10 @@ const ProjectCard = ({ project, onUpdateStatus, onDelete, onArchive, user }) => 
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* КНОПКА PDF ЧЕКА */}
           {isFinalized && (
             <button 
               onClick={generatePDFReceipt}
-              className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500 hover:text-black transition-all border border-cyan-500/20 shadow-lg shadow-cyan-500/5"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500 hover:text-black transition-all border border-cyan-500/20 shadow-lg"
               title="Download PDF Receipt"
             >
               <FileText size={18} />

@@ -36,36 +36,41 @@ const Dashboard = ({ user, rates, recoveryKeyFromServer }) => {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get('/api/projects', { withCredentials: true });
-      const statsRes = await axios.get('/api/stats', { withCredentials: true });
+      // Використовуємо короткі шляхи, baseURL додасться сам
+      const res = await axios.get('/api/projects');
+      const statsRes = await axios.get('/api/stats');
+      
       setProjects(res.data.projects || []);
       setStats(statsRes.data || []);
       setLoading(false);
     } catch (err) { 
-      console.error("Sync Error:", err); 
+      console.error("Sync Error:", err.message); 
       setLoading(false); 
     }
   };
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`/api/projects/${deleteModal.projectId}`, { withCredentials: true });
+      await axios.delete(`/api/projects/${deleteModal.projectId}`);
       setDeleteModal({ isOpen: false, projectId: null });
       fetchData();
-    } catch (err) { console.error("Error:", err); }
+    } catch (err) { 
+      console.error("Termination Error:", err.message); 
+    }
   };
 
   const calculateTotalEarned = () => {
     return projects.reduce((acc, p) => {
       const isDone = ['Готово', 'Оплачено', 'Deployed', 'Finalized'].includes(p.status);
       if (isDone) {
-        const parts = p.price.trim().split(' ');
+        const parts = p.price.toString().trim().split(' ');
         const val = parseFloat(parts[0]) || 0;
         const curr = parts[1] ? parts[1].toUpperCase() : 'USD';
         const rate = rates?.[curr] || (curr === 'UAH' ? 41.5 : 1);
+        
         if (curr === 'UAH') return acc + (val / rate);
-        if (curr === 'BTC') return acc + (val * (rates?.BTC || 65000));
-        if (curr === 'ETH') return acc + (val * (rates?.ETH || 3500));
+        if (curr === 'BTC') return acc + (val * (rates?.BTC || 102000));
+        if (curr === 'ETH') return acc + (val * (rates?.ETH || 3800));
         return acc + val;
       }
       return acc;
@@ -97,22 +102,17 @@ const Dashboard = ({ user, rates, recoveryKeyFromServer }) => {
   }), [stats]);
 
   const handleAddProject = async (e) => {
-  e.preventDefault(); // ЦЕ ОБОВ'ЯЗКОВО, щоб сторінка не перезавантажувалась
-  console.log("Attempting to authorize mission...", newProject); // Перевірка в консолі
-
-  try {
-    const res = await axios.post('/api/projects', newProject, { withCredentials: true });
-    console.log("Server response:", res.data);
-    
-    // Очищаємо форму та закриваємо модалку
-    setNewProject({ title: '', source: 'TG', client: '', deadline: '', price: '', currency: 'USD' });
-    setIsModalOpen(false);
-    fetchData(); // Оновлюємо список проектів
-  } catch (err) {
-    console.error("Critical deployment error:", err.response?.data || err.message);
-    alert("System Error: Check console for logs");
-  }
-};
+    e.preventDefault();
+    try {
+      await axios.post('/api/projects', newProject);
+      setNewProject({ title: '', source: 'TG', client: '', deadline: '', price: '', currency: 'USD' });
+      setIsModalOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error("Critical deployment error:", err.response?.data || err.message);
+      alert("System Error: Mission Authorization Failed");
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-[#050505] flex items-center justify-center">
@@ -216,9 +216,15 @@ const Dashboard = ({ user, rates, recoveryKeyFromServer }) => {
               <ProjectCard 
                 key={project.id} 
                 project={project} 
-                onUpdateStatus={async (id, status) => { await axios.patch(`/api/projects/${id}`, { status }, { withCredentials: true }); fetchData(); }}
+                onUpdateStatus={async (id, status) => { 
+                  await axios.patch(`/api/projects/${id}`, { status }); 
+                  fetchData(); 
+                }}
                 onDelete={() => setDeleteModal({ isOpen: true, projectId: project.id })}
-                onArchive={async (id) => { await axios.patch(`/api/projects/${id}`, { status: 'Архів' }, { withCredentials: true }); fetchData(); }}
+                onArchive={async (id) => { 
+                  await axios.patch(`/api/projects/${id}`, { status: 'Архів' }); 
+                  fetchData(); 
+                }}
               />
             ))}
           </div>
@@ -226,131 +232,69 @@ const Dashboard = ({ user, rates, recoveryKeyFromServer }) => {
       </main>
 
       {/* MODAL WINDOW WITH FIXED INPUTS */}
-{isModalOpen && (
-  <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4">
-    <div className="bg-[#0a0a0a] border border-white/5 w-full max-w-xl rounded-[3rem] p-8 md:p-12 relative shadow-2xl overflow-y-auto max-h-[95vh] animate-zoom-in">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
-      <button 
-        onClick={() => setIsModalOpen(false)} 
-        className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors p-2"
-      >
-        <X size={28} />
-      </button>
-      
-      <div className="mb-10">
-         <h2 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white leading-none">
-           Initial <span className="text-cyan-500">Deployment</span>
-         </h2>
-         <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mt-3 flex items-center">
-           <Shield size={10} className="mr-2 text-cyan-500" /> Authorized Admin Session
-         </p>
-      </div>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-4">
+          <div className="bg-[#0a0a0a] border border-white/5 w-full max-w-xl rounded-[3rem] p-8 md:p-12 relative shadow-2xl overflow-y-auto max-h-[95vh] animate-zoom-in">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
+            <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors p-2">
+              <X size={28} />
+            </button>
+            
+            <div className="mb-10 text-left">
+               <h2 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white leading-none">Initial <span className="text-cyan-500">Deployment</span></h2>
+               <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mt-3 flex items-center">
+                 <Shield size={10} className="mr-2 text-cyan-500" /> Authorized Admin Session
+               </p>
+            </div>
 
-      <form onSubmit={handleAddProject} className="space-y-5">
-        {/* Mission Title */}
-        <div className="space-y-2 text-left">
-           <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Mission Title</label>
-           <input 
-             type="text" 
-             placeholder="Designate target..." 
-             required 
-             className="w-full bg-white/[0.03] border border-white/10 p-5 rounded-2xl outline-none focus:border-cyan-500/50 text-white transition-all text-sm font-bold placeholder:text-slate-800" 
-             value={newProject.title} 
-             onChange={e => setNewProject({...newProject, title: e.target.value})} 
-           />
+            <form onSubmit={handleAddProject} className="space-y-5">
+              <div className="space-y-2 text-left">
+                 <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Mission Title</label>
+                 <input type="text" placeholder="Designate target..." required className="w-full bg-white/[0.03] border border-white/10 p-5 rounded-2xl outline-none focus:border-cyan-500/50 text-white transition-all text-sm font-bold placeholder:text-slate-800" value={newProject.title} onChange={e => setNewProject({...newProject, title: e.target.value})} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Client / Node</label>
+                  <input type="text" placeholder="Entity name..." required className="w-full bg-white/[0.03] border border-white/10 p-5 rounded-2xl outline-none focus:border-cyan-500/50 text-white text-sm font-bold placeholder:text-slate-800 transition-all h-[60px]" value={newProject.client} onChange={e => setNewProject({...newProject, client: e.target.value})} />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Source Channel</label>
+                  <select className="w-full h-[60px] bg-white/[0.03] border border-white/10 px-5 rounded-2xl text-white outline-none cursor-pointer text-sm font-bold focus:border-cyan-500/50 transition-all appearance-none" value={newProject.source} onChange={e => setNewProject({...newProject, source: e.target.value})}>
+                    <option value="TG" className="bg-[#0a0a0a]">TELEGRAM</option>
+                    <option value="Upwork" className="bg-[#0a0a0a]">UPWORK</option>
+                    <option value="Mail" className="bg-[#0a0a0a]">EMAIL</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Value / Price</label>
+                  <div className="relative h-[60px] flex items-center bg-white/[0.03] border border-white/10 rounded-2xl focus-within:border-cyan-500/50 overflow-hidden">
+                    <input type="number" placeholder="0.00" required className="flex-1 bg-transparent pl-5 pr-16 outline-none text-white text-sm font-bold" value={newProject.price} onChange={e => setNewProject({...newProject, price: e.target.value})} />
+                    <select className="absolute right-0 h-full bg-white/5 px-4 text-cyan-500 outline-none cursor-pointer text-[10px] font-black appearance-none" value={newProject.currency} onChange={e => setNewProject({...newProject, currency: e.target.value})}>
+                      <option value="USD" className="bg-[#0a0a0a]">USD</option>
+                      <option value="UAH" className="bg-[#0a0a0a]">UAH</option>
+                      <option value="BTC" className="bg-[#0a0a0a]">BTC</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Final Deadline</label>
+                  <input type="date" required className="w-full h-[60px] bg-white/[0.03] border border-white/10 p-5 rounded-2xl outline-none text-white [color-scheme:dark]" value={newProject.deadline} onChange={e => setNewProject({...newProject, deadline: e.target.value})} />
+                </div>
+              </div>
+
+              <button type="submit" className="w-full bg-cyan-500 hover:bg-cyan-400 py-6 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.3em] text-black mt-4 shadow-2xl transition-all active:scale-[0.98]">
+                Authorize Mission
+              </button>
+            </form>
+          </div>
         </div>
-
-        {/* Client & Source Channel */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
-  <div className="space-y-2">
-    <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Client / Node</label>
-    <input 
-      type="text" 
-      placeholder="Entity name..." 
-      required 
-      className="w-full bg-white/[0.03] border border-white/10 p-5 rounded-2xl outline-none focus:border-cyan-500/50 text-white text-sm font-bold placeholder:text-slate-800 transition-all h-[60px]" 
-      value={newProject.client} 
-      onChange={e => setNewProject({...newProject, client: e.target.value})} 
-    />
-  </div>
-  
-  <div className="space-y-2">
-    <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Source Channel</label>
-    <div className="relative h-[60px]">
-      <select 
-        style={{ 
-          colorScheme: 'dark',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right 1.25rem center',
-          backgroundSize: '1rem'
-        }} 
-        className="w-full h-full bg-white/[0.03] border border-white/10 px-5 rounded-2xl text-white outline-none cursor-pointer text-sm font-bold appearance-none focus:border-cyan-500/50 transition-all pr-12" 
-        value={newProject.source} 
-        onChange={e => setNewProject({...newProject, source: e.target.value})}
-      >
-        <option value="TG" className="bg-[#0a0a0a] text-white py-4">TELEGRAM</option>
-        <option value="Upwork" className="bg-[#0a0a0a] text-white py-4">UPWORK</option>
-        <option value="Mail" className="bg-[#0a0a0a] text-white py-4">EMAIL</option>
-      </select>
-    </div>
-  </div>
-</div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
-  {/* Блок Value / Price */}
-  <div className="space-y-2">
-    <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Value / Price</label>
-    <div className="relative h-[60px] flex items-center bg-white/[0.03] border border-white/10 rounded-2xl focus-within:border-cyan-500/50 transition-all overflow-hidden">
-      <input 
-        type="number" 
-        placeholder="0.00" 
-        required 
-        className="flex-1 bg-transparent pl-5 pr-16 outline-none text-white text-sm font-bold placeholder:text-slate-800 h-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
-        value={newProject.price} 
-        onChange={e => setNewProject({...newProject, price: e.target.value})} 
-      />
-      {/* Селект валюти з повним скиданням стилів стрілки */}
-      <div className="absolute right-0 top-0 h-full flex items-center">
-        <select 
-          style={{ colorScheme: 'dark' }} 
-          className="h-full bg-white/5 border-l border-white/10 px-4 text-cyan-500 outline-none cursor-pointer text-[10px] font-black uppercase appearance-none hover:bg-white/10 transition-colors text-center min-w-[70px]" 
-          value={newProject.currency} 
-          onChange={e => setNewProject({...newProject, currency: e.target.value})}
-        >
-          <option value="USD" className="bg-[#0a0a0a] text-white">USD</option>
-          <option value="UAH" className="bg-[#0a0a0a] text-white">UAH</option>
-          <option value="BTC" className="bg-[#0a0a0a] text-white">BTC</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  {/* Блок Final Deadline */}
-  <div className="space-y-2">
-    <label className="text-[9px] font-black text-slate-500 uppercase ml-2 tracking-widest">Final Deadline</label>
-    <div className="h-[60px]">
-      <input 
-        type="date" 
-        required 
-        className="w-full h-full bg-white/[0.03] border border-white/10 p-5 rounded-2xl outline-none focus:border-cyan-500/50 text-white [color-scheme:dark] text-sm font-bold transition-all" 
-        value={newProject.deadline} 
-        onChange={e => setNewProject({...newProject, deadline: e.target.value})} 
-      />
-    </div>
-  </div>
-</div>
-
-        <button 
-          type="submit" 
-          className="w-full bg-cyan-500 hover:bg-cyan-400 py-6 rounded-[2rem] font-black uppercase text-[11px] tracking-[0.3em] text-black mt-4 shadow-2xl shadow-cyan-500/20 transition-all active:scale-[0.98]"
-        >
-          Authorize Mission
-        </button>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 };

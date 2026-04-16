@@ -19,10 +19,8 @@ function App() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
  useEffect(() => {
-  // Вказуємо повну адресу твого тунелю ngrok
-  axios.get('https://reversion-grueling-reviving.ngrok-free.dev/api/check-auth', { 
-    withCredentials: true // Обов'язково для роботи з куками/сесіями
-  })
+  // Тепер пишемо тільки шлях, baseURL додасться сам
+  axios.get('/api/check-auth') 
     .then(res => {
       if (res.data.authenticated) {
         setUser(res.data.user);
@@ -30,6 +28,7 @@ function App() {
       setLoading(false);
     })
     .catch((err) => {
+      // Виводимо тільки текст помилки, щоб React не "падав"
       console.error("Auth check failed:", err.message);
       setLoading(false);
     });
