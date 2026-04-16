@@ -19,7 +19,7 @@ function App() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
-    axios.get('https://reversion-grueling-reviving.ngrok-free.dev/api/check-auth')
+    axios.get('/api/check-auth')
       .then(res => {
         if (res.data.authenticated) {
           setUser(res.data.user);
@@ -31,7 +31,7 @@ function App() {
 
   // Функція остаточного виходу
   const confirmLogout = async () => {
-    await axios.get('https://reversion-grueling-reviving.ngrok-free.dev/api/exit');
+    await axios.get('/api/exit');
     setUser(null);
     setCurrentPage('dashboard');
     setShowLogoutConfirm(false);

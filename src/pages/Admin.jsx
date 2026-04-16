@@ -9,7 +9,7 @@ const Admin = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('https://reversion-grueling-reviving.ngrok-free.dev/api/admin/users', { withCredentials: true });
+      const res = await axios.get('/api/admin/users', { withCredentials: true });
       setAllUsers(res.data);
       setLoading(false);
     } catch (err) {
@@ -27,7 +27,7 @@ const Admin = () => {
     if (!newPassword) return; // Можна додати кастомне сповіщення
 
     try {
-      await axios.post('https://reversion-grueling-reviving.ngrok-free.dev/api/admin/update-user', 
+      await axios.post('/api/admin/update-user', 
         { userId, newPassword }, 
         { withCredentials: true }
       );

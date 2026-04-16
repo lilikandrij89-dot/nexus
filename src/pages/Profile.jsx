@@ -29,7 +29,7 @@ const Profile = ({ user, onUpdateUser }) => {
 
     try {
       // Зверни увагу на URL: якщо ти на хостингу, заміни localhost на свій домен
-      const res = await axios.post('https://reversion-grueling-reviving.ngrok-free.dev/api/update-profile', formData, { 
+      const res = await axios.post('/api/update-profile', formData, { 
         withCredentials: true 
       });
 

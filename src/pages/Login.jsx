@@ -32,7 +32,7 @@ const Login = ({ onLoginSuccess }) => {
     try {
       // --- ЛОГІКА ВХОДУ ---
       if (mode === 'login') {
-        const res = await axios.post('https://reversion-grueling-reviving.ngrok-free.dev/api/auth/login', {
+        const res = await axios.post('/api/auth/login', {
           login: formData.login,
           password: formData.password
         }, { withCredentials: true });
@@ -41,14 +41,14 @@ const Login = ({ onLoginSuccess }) => {
       
       // --- ЛОГІКА РЕЄСТРАЦІЇ (КРОК 1: ЗАПИТ) ---
       else if (mode === 'register' && step === 1) {
-        await axios.post('https://reversion-grueling-reviving.ngrok-free.dev/api/auth/register-request', formData);
+        await axios.post('/api/auth/register-request', formData);
         setStep(2);
         setStatus({ type: 'success', msg: 'Код авторизації відправлено на пошту' });
       }
 
       // --- ЛОГІКА РЕЄСТРАЦІЇ (КРОК 2: ПІДТВЕРДЖЕННЯ) ---
       else if (mode === 'register' && step === 2) {
-        const res = await axios.post('https://reversion-grueling-reviving.ngrok-free.dev/api/auth/confirm-register', {
+        const res = await axios.post('/api/auth/confirm-register', {
           email: formData.email,
           code: verificationCode
         }, { withCredentials: true });
@@ -59,7 +59,7 @@ const Login = ({ onLoginSuccess }) => {
 
       // --- ЛОГІКА СКИНУТТЯ ---
       else if (mode === 'reset') {
-        await axios.post('https://reversion-grueling-reviving.ngrok-free.dev/api/reset-password', formData);
+        await axios.post('/api/reset-password', formData);
         setStatus({ type: 'success', msg: 'СИСТЕМУ ОНОВЛЕНО. Увійдіть з новим ключем.' });
         setMode('login');
       }

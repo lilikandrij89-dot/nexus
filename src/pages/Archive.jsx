@@ -9,7 +9,7 @@ const Archive = ({ rates }) => {
 
   const fetchArchive = async () => {
     try {
-      const res = await axios.get('https://reversion-grueling-reviving.ngrok-free.dev/api/projects', { withCredentials: true });
+      const res = await axios.get('/api/projects', { withCredentials: true });
       const archived = res.data.projects.filter(p => p.status === 'Архів');
       setProjects(archived);
       setLoading(false);
@@ -25,7 +25,7 @@ const Archive = ({ rates }) => {
 
   const handleRestore = async (id) => {
     try {
-      await axios.patch(`https://reversion-grueling-reviving.ngrok-free.dev/api/projects/${id}`, 
+      await axios.patch(`/api/projects/${id}`, 
         { status: 'В роботі' }, 
         { withCredentials: true }
       );

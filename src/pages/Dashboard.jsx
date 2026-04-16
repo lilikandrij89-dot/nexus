@@ -36,8 +36,8 @@ const Dashboard = ({ user, rates, recoveryKeyFromServer }) => {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get('https://reversion-grueling-reviving.ngrok-free.dev/api/projects', { withCredentials: true });
-      const statsRes = await axios.get('https://reversion-grueling-reviving.ngrok-free.dev/api/stats', { withCredentials: true });
+      const res = await axios.get('/api/projects', { withCredentials: true });
+      const statsRes = await axios.get('/api/stats', { withCredentials: true });
       setProjects(res.data.projects || []);
       setStats(statsRes.data || []);
       setLoading(false);
@@ -49,7 +49,7 @@ const Dashboard = ({ user, rates, recoveryKeyFromServer }) => {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`https://reversion-grueling-reviving.ngrok-free.dev/api/projects/${deleteModal.projectId}`, { withCredentials: true });
+      await axios.delete(`/api/projects/${deleteModal.projectId}`, { withCredentials: true });
       setDeleteModal({ isOpen: false, projectId: null });
       fetchData();
     } catch (err) { console.error("Error:", err); }
@@ -101,7 +101,7 @@ const Dashboard = ({ user, rates, recoveryKeyFromServer }) => {
   console.log("Attempting to authorize mission...", newProject); // Перевірка в консолі
 
   try {
-    const res = await axios.post('https://reversion-grueling-reviving.ngrok-free.dev/api/projects', newProject, { withCredentials: true });
+    const res = await axios.post('/api/projects', newProject, { withCredentials: true });
     console.log("Server response:", res.data);
     
     // Очищаємо форму та закриваємо модалку
@@ -216,9 +216,9 @@ const Dashboard = ({ user, rates, recoveryKeyFromServer }) => {
               <ProjectCard 
                 key={project.id} 
                 project={project} 
-                onUpdateStatus={async (id, status) => { await axios.patch(`https://reversion-grueling-reviving.ngrok-free.dev/api/projects/${id}`, { status }, { withCredentials: true }); fetchData(); }}
+                onUpdateStatus={async (id, status) => { await axios.patch(`/api/projects/${id}`, { status }, { withCredentials: true }); fetchData(); }}
                 onDelete={() => setDeleteModal({ isOpen: true, projectId: project.id })}
-                onArchive={async (id) => { await axios.patch(`https://reversion-grueling-reviving.ngrok-free.dev/api/projects/${id}`, { status: 'Архів' }, { withCredentials: true }); fetchData(); }}
+                onArchive={async (id) => { await axios.patch(`/api/projects/${id}`, { status: 'Архів' }, { withCredentials: true }); fetchData(); }}
               />
             ))}
           </div>
