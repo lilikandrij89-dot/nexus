@@ -18,16 +18,22 @@ function App() {
   // Стан для модалки виходу
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  useEffect(() => {
-    axios.get('/api/check-auth')
-      .then(res => {
-        if (res.data.authenticated) {
-          setUser(res.data.user);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+ useEffect(() => {
+  // Вказуємо повну адресу твого тунелю ngrok
+  axios.get('https://reversion-grueling-reviving.ngrok-free.dev/api/check-auth', { 
+    withCredentials: true // Обов'язково для роботи з куками/сесіями
+  })
+    .then(res => {
+      if (res.data.authenticated) {
+        setUser(res.data.user);
+      }
+      setLoading(false);
+    })
+    .catch((err) => {
+      console.error("Auth check failed:", err.message);
+      setLoading(false);
+    });
+ }, []);
 
   // Функція остаточного виходу
   const confirmLogout = async () => {
