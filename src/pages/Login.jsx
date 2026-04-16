@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Shield, Key, Mail, User, AlertCircle, CheckCircle2, ChevronLeft, Copy, Check, Lock, Zap } from 'lucide-react';
 
+// АДРЕСА ТВОГО БЕКЕНДУ (Ngrok)
+const API_URL = 'https://reversion-grueling-reviving.ngrok-free.dev';
+
 const Login = ({ onLoginSuccess }) => {
   const [mode, setMode] = useState('login'); 
   const [step, setStep] = useState(1); // 1 - ввід даних, 2 - ввід коду (для рег)
@@ -32,23 +35,24 @@ const Login = ({ onLoginSuccess }) => {
     try {
       // --- ЛОГІКА ВХОДУ ---
       if (mode === 'login') {
-        const res = await axios.post('/api/auth/login', {
+        const res = await axios.post(`${API_URL}/api/auth/login`, {
           login: formData.login,
           password: formData.password
         }, { withCredentials: true });
+        
         onLoginSuccess(res.data.user);
       } 
       
       // --- ЛОГІКА РЕЄСТРАЦІЇ (КРОК 1: ЗАПИТ) ---
       else if (mode === 'register' && step === 1) {
-        await axios.post('/api/auth/register-request', formData);
+        await axios.post(`${API_URL}/api/auth/register-request`, formData);
         setStep(2);
         setStatus({ type: 'success', msg: 'Код авторизації відправлено на пошту' });
       }
 
       // --- ЛОГІКА РЕЄСТРАЦІЇ (КРОК 2: ПІДТВЕРДЖЕННЯ) ---
       else if (mode === 'register' && step === 2) {
-        const res = await axios.post('/api/auth/confirm-register', {
+        const res = await axios.post(`${API_URL}/api/auth/confirm-register`, {
           email: formData.email,
           code: verificationCode
         }, { withCredentials: true });
@@ -59,13 +63,15 @@ const Login = ({ onLoginSuccess }) => {
 
       // --- ЛОГІКА СКИНУТТЯ ---
       else if (mode === 'reset') {
-        await axios.post('/api/reset-password', formData);
+        await axios.post(`${API_URL}/api/reset-password`, formData);
         setStatus({ type: 'success', msg: 'СИСТЕМУ ОНОВЛЕНО. Увійдіть з новим ключем.' });
         setMode('login');
       }
 
     } catch (err) {
-      setStatus({ type: 'error', msg: err.response?.data?.error || 'Помилка доступу' });
+      // Виправлення помилки #31: гарантуємо, що msg — це рядок
+      const errorText = err.response?.data?.error || err.message || 'Помилка доступу до вузла';
+      setStatus({ type: 'error', msg: String(errorText) });
     }
   };
 
